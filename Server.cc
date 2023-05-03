@@ -7,7 +7,7 @@
 #include <list>
 #include <iostream>
 #include <sys/socket.h>
-#include "project.pb.h"
+#include "chat.pb.h"
 #include <netinet/in.h>
 
 std::map<std::string, int> users_sockets;
@@ -15,7 +15,6 @@ std::map<std::string, int> users_state;
 std::map<std::string, std::string> users;
 
 #define PORT 8080
-
 
 void* handle_client(void* user_socket) {
     // Instantiate the variable to store the connected user's name.
