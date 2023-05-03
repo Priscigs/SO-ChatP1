@@ -130,11 +130,14 @@ void options() {
 
             // Si el usuario ingresa "--usuariosL", solicitar una lista de usuarios al servidor
             case hash("--usuariosL"):
+                // Se crea la solicitud de lista de usuarios
                 UserOption listRequest;
                 listRequest.set_option(2);
                 UserList userInfoRequest;
                 userInfoRequest.set_type_request(true);
                 listRequest.set_allocated_inforequest(&userInfoRequest);
+
+                // Se serializa la solicitud para enviarla al servidor
                 string serializedRequest;
                 listRequest.SerializeToString(&serializedRequest);
                 int sendResult = send(socketClient, serializedRequest.c_str(), serializedRequest.size(), 0);
@@ -142,25 +145,37 @@ void options() {
                     cerr << "No se pudo enviar el mensaje" << std::endl;
                     return 1;
                 }
+
+                // Se liberan los recursos de la solicitud
                 listRequest.clear_option();
                 listRequest.release_inforequest();
                 break;
 
             // Si el usuario ingresa "--infoMe", solicitar información del usuario actual al servidor
             case hash("--infoMe"):
+                // Se crea un objeto UserOption para almacenar la opción seleccionada por el usuario
                 UserOption meRequest;
+                // Se establece la opción correspondiente para solicitar información del usuario
                 meRequest.set_option(2);
+                // Se crea un objeto UserList para almacenar los detalles de la solicitud de información
                 UserList meInfoRequest;
+                // Se establece el tipo de solicitud como "false" para obtener información de un solo usuario
                 meInfoRequest.set_type_request(false);
+                // Se establece el nombre del usuario actual para obtener su información
                 meInfoRequest.set_user(cliente);
+                // Se establece el objeto meInfoRequest en el objeto meRequest
                 meRequest.set_allocated_inforequest(&meInfoRequest);
+                // Se convierte el objeto meRequest en una cadena de bytes
                 string serializedRequest;
                 meRequest.SerializeToString(&serializedRequest);
+                // Se envía la solicitud al servidor
                 int sendResult = send(socketClient, serializedRequest.c_str(), serializedRequest.size(), 0);
                 if(sendResult == -1) {
+                    // Si la solicitud falla, se muestra un mensaje de error y se retorna 1
                     cerr << "No se pudo enviar el mensaje" << std::endl;
                     return 1;
                 }
+                // Se liberan los recursos utilizados por los objetos creados
                 meRequest.clear_option();
                 meRequest.release_inforequest();
                 break;
@@ -201,10 +216,13 @@ void options() {
                 break;
 
             // Permite al usuario enviar un mensaje a todos los usuarios conectados al servidor
-            case hash("--allM"): {
+            case hash("--allM"): 
+                // Se solicita al usuario que escriba el mensaje a enviar a todos los usuarios.
                 std::cout << "Mensaje: ";
                 string message;
                 getline(cin, message);
+                
+                // Se construye la solicitud con el mensaje a enviar.
                 UserOption messageToAll;
                 messageToAll.set_option(4);
                 Message broadcastMessage;
@@ -214,70 +232,98 @@ void options() {
                 messageToAll.set_allocated_message(&broadcastMessage);
                 string serializedRequest;
                 messageToAll.SerializeToString(&serializedRequest);
-             
+                        
+                // Se envía la solicitud al servidor.
                 int sendResult = send(socketClient, serializedRequest.c_str(), serializedRequest.size(), 0);
                 if(sendResult == -1) {
                     cerr << "No se pudo enviar el mensaje" << std::endl;
                     return 1;
                 }
+                
+                // Se libera la memoria utilizada por la solicitud.
                 messageToAll.clear_option();
                 messageToAll.release_message();
                 break;
-            }
 
             // Permite al usuario enviar un mensaje privado a un usuario específico
-            case hash("--onlyM"): {
+            case hash("--onlyM"): 
+                // Solicitar al usuario que ingrese el destinatario y el mensaje
                 std::cout << "Para: ";
                 string to;
                 getline(cin, to);
                 std::cout << "Mensaje: ";
                 string message;
                 getline(cin, message);
+                
+                // Crear un objeto UserOption y configurar la opción como un mensaje privado
                 UserOption messageToOne;
-                Message privateMessage;
-                privateMessage.set_message_type(false);
-                privateMessage.set_message(message);
-                privateMessage.set_sender(cliente);
-                privateMessage.set_recipient(to);
                 messageToOne.set_option(4);
+                
+                // Crear un objeto Message y configurarlo con los detalles del mensaje privado
+                Message privateMessage;
+                privateMessage.set_message_type(false); // configurar como mensaje privado
+                privateMessage.set_message(message);
+                privateMessage.set_sender(cliente); // remitente es el usuario actual
+                privateMessage.set_recipient(to); // destinatario es el usuario ingresado por el usuario
+                
+                // Asignar el objeto Message a la opción UserOption
                 messageToOne.set_allocated_message(&privateMessage);
                 string serializedRequest;
                 messageToOne.SerializeToString(&serializedRequest);
-               
+                
+                // Enviar el mensaje al servidor utilizando la función send()
                 int sendResult = send(socketClient, serializedRequest.c_str(), serializedRequest.size(), 0);
                 if(sendResult == -1) {
                     cerr << "No se pudo enviar el mensaje" << std::endl;
                     return 1;
                 }
+                
+                // Liberar los recursos asignados para evitar fugas de memoria
                 messageToOne.clear_option();
                 messageToOne.release_message();
                 break;
-            }
 
             // Si el usuario ingresa "--estado", solicitar un cambio de estado al servidor
             case hash("--estado"):
+                // Muestra un mensaje en la consola para solicitar al usuario que ingrese un nuevo estado.
                 std::cout << "Nuevo estado: ";
+
+                // Lee la entrada del usuario para el nuevo estado y lo guarda en la variable newStatusInput.
                 string newStatusInput;
                 getline(cin, newStatusInput);
+
+                // Crea un objeto UserOption para enviar una solicitud de cambio de estado al servidor.
                 UserOption changeStatusRequest;
+
+                // Establece la opción en 3 para indicar que se está realizando una solicitud de cambio de estado.
                 changeStatusRequest.set_option(3);
+
+                // Crea un objeto Status y establece el nuevo estado ingresado por el usuario y el nombre de usuario actual.
                 Status changeStatus;
                 changeStatus.set_newstatus(stoi(newStatusInput));
                 changeStatus.set_username(cliente);
+
+                // Asigna el objeto Status recién creado a la solicitud de cambio de estado.
                 changeStatusRequest.set_allocated_status(&changeStatus);
+
+                // Serializa la solicitud de cambio de estado y la guarda en la variable serializedRequest.
                 string serializedRequest;
                 changeStatusRequest.SerializeToString(&serializedRequest);
+
+                // Envía la solicitud serializada al servidor a través del socket y guarda el resultado en sendResult.
                 int sendResult = send(socketClient, serializedRequest.c_str(), serializedRequest.size(), 0);
+
+                // Verifica si se pudo enviar la solicitud correctamente y muestra un mensaje de error si no es así.
                 if(sendResult == -1) {
                     cerr << "No se pudo enviar el mensaje" << std::endl;
                     return 1;
                 }
+
+                // Limpia la opción y libera la memoria asignada al objeto Status.
                 changeStatusRequest.clear_option();
                 changeStatusRequest.release_status();
-                break;
 
-            // Si el usuario ingresa "--salir", salir del programa
-            case hash("--salir"):
+                // Sale del switch.
                 break;
 
             default: {
